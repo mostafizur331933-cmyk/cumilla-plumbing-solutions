@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>এডমিন লগইন - কুমিল্লা প্লাম্বিং সলিউশনস</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+        }
+        .logo { text-align: center; margin-bottom: 30px; }
+        .logo h1 { color: #333; font-size: 24px; margin-bottom: 10px; }
+        .logo p { color: #666; font-size: 14px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.2);
+        }
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn-login:hover { transform: translateY(-2px); }
+        .btn-login:active { transform: translateY(0); }
+        .btn-login:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .error-msg {
+            color: #e74c3c; font-size: 14px; margin-top: 15px;
+            padding: 10px; background: #ffe6e6; border-radius: 5px; display: none;
+        }
+        .success-msg {
+            color: #27ae60; font-size: 14px; margin-top: 15px;
+            padding: 10px; background: #e6ffe6; border-radius: 5px; display: none;
+        }
+        .loading { display: none; text-align: center; margin-top: 15px; }
+        .spinner {
+            border: 4px solid #f3f3f3; border-top: 4px solid #667eea;
+            border-radius: 50%; width: 30px; height: 30px;
+            animation: spin 1s linear infinite; margin: 0 auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .hint { font-size: 12px; color: #999; margin-top: 6px; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>🔐 এডমিন প্যানেল</h1>
+            <p>কুমিল্লা প্লাম্বিং সলিউশনস</p>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">ইমেইল</label>
+                <input type="email" id="email" placeholder="admin@example.com" autocomplete="username" required>
+                <p class="hint">এটি Firebase Authentication-এ তৈরি করা এডমিন ইমেইল</p>
+            </div>
+
+            <div class="form-group">
+                <label for="password">পাসওয়ার্ড</label>
+                <input type="password" id="password" placeholder="পাসওয়ার্ড লিখুন" autocomplete="current-password" required>
+            </div>
+
+            <button type="submit" class="btn-login" id="loginBtn">লগইন করুন</button>
+
+            <div class="loading" id="loading"><div class="spinner"></div></div>
+            <div class="error-msg" id="errorMsg"></div>
+            <div class="success-msg" id="successMsg"></div>
+        </form>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const errorMsg = document.getElementById('errorMsg');
+        const successMsg = document.getElementById('successMsg');
+        const loading = document.getElementById('loading');
+        const loginBtn = document.getElementById('loginBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+            loading.style.display = 'block';
+            loginBtn.disabled = true;
+
+            try {
+                await firebase.auth().signInWithEmailAndPassword(email, password);
+
+                successMsg.textContent = '✅ লগইন সফল! পুনর্নির্দেশিত হচ্ছে...';
+                successMsg.style.display = 'block';
+
+                setTimeout(() => {
+                    window.location.href = 'admin-dashboard.html';
+                }, 800);
+            } catch (error) {
+                let message = 'লগইন ব্যর্থ হয়েছে।';
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+                    message = 'ইমেইল বা পাসওয়ার্ড ভুল!';
+                } else if (error.code === 'auth/invalid-email') {
+                    message = 'সঠিক ইমেইল ফরম্যাট দিন।';
+                } else if (error.code) {
+                    message = 'ত্রুটি: ' + error.code;
+                }
+                errorMsg.textContent = '❌ ' + message;
+                errorMsg.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+                loginBtn.disabled = false;
+            }
+        });
+
+        // ইতিমধ্যে লগইন থাকলে সরাসরি ড্যাশবোর্ডে পাঠান
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                window.location.href = 'admin-dashboard.html';
+            }
+        });
+    </script>
+</body>
+</html>
