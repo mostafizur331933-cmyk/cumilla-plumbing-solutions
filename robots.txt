@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin-login.html
+Disallow: /admin-dashboard.html
+Disallow: /admin-dashboard.js
+Disallow: /admin-db.js
+
+Sitemap: https://mostafizur331933-cmyk.github.io/cumilla-plumbing-solutions/sitemap.xml
